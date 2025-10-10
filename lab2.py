@@ -64,20 +64,19 @@ test_metrics_lr = {
 }
 print(test_metrics_lr) # print mse, r^2, max error to check the performance
 
-for i in range(0, 11): # different alpha values are tested through iteration
-    alpha = 0.1 * i
+for alpha in [0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0]: # different alpha values are tested through iteration
     rlr = Ridge(alpha=alpha) # initialise ridge regression model object with the specified alpha value
     #cross_validation(rlr, X_train, y_train) # cross validate using k-fold
     rlr.fit(X_train, y_train) # train the ridge regression using train data
     y_test_pred_rlr= rlr.predict(X_test) # test the trained regression using test data
 
     print(f"linear regression coefficients: {lin_reg.coef_}") # print the weights for the regression
-    test_metrics_lr = {
-        'MSE': mean_squared_error(y_test, y_test_pred_lr),
-        'R²': r2_score(y_test, y_test_pred_lr),
-        'Max Error': max_error(y_test, y_test_pred_lr)
+    test_metrics_rlr = {
+        'MSE': mean_squared_error(y_test, y_test_pred_rlr),
+        'R²': r2_score(y_test, y_test_pred_rlr),
+        'Max Error': max_error(y_test, y_test_pred_rlr)
     }
-    print(test_metrics_lr) # print mse, r^2, max error to check the performance
+    print(test_metrics_rlr) # print mse, r^2, max error to check the performance
 
 '''
 This is to visualise the error, but i dont see the big difference even if i do so, so i just left it here for future usage or smth
