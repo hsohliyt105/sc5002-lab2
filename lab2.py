@@ -70,7 +70,7 @@ for alpha in [0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0]: # different alpha values a
     rlr.fit(X_train, y_train) # train the ridge regression using train data
     y_test_pred_rlr= rlr.predict(X_test) # test the trained regression using test data
 
-    print(f"linear regression coefficients: {lin_reg.coef_}") # print the weights for the regression
+    print(f"ridge regression coefficients: {lin_reg.coef_}") # print the weights for the regression
     test_metrics_rlr = {
         'MSE': mean_squared_error(y_test, y_test_pred_rlr),
         'R²': r2_score(y_test, y_test_pred_rlr),
