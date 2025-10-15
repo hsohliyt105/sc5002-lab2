@@ -52,7 +52,7 @@ def preprocess_data(csv_path):
     return X_train, X_test, y_train, y_test
 
 def print_metrics(model, X, y):
-    print("--- Overall performance on test set ---")
+    print("\n### Overall performance on test set")
     y_pred = model.predict(X)
     print(f"coefficients: {model.coef_}") # print the weights for the regression
     # print mse, rmse, r^2, max error to check the performance
@@ -71,59 +71,62 @@ def cross_validate(model, X, y, cv):
     # cross validates the model with given cv method
     mse_scores = -cross_val_score(model, X_train, y_train, scoring="neg_mean_squared_error", cv=cv) # cross validate with the given kf. returns with -MSE scoring
     rmse_scores = np.sqrt(mse_scores) # calculate rmse to scale correctly
-    print(f"--- Cross validation with {K} folds ---")
+    r2_scores = cross_val_score(model, X_train, y_train, scoring="r2", cv=cv) # cross validate with the given kf. returns with -MSE scoring
+    
+    print(f"\n### Cross validation with {K} folds")
     print(f"Average MSE score: {np.round(mse_scores.mean(), n_decimals)}, standard deviation: {np.round(mse_scores.std(), n_decimals)}") # average mean square error score
     print(f"Average RMSE score: {np.round(rmse_scores.mean(), n_decimals)}, standard deviation: {np.round(rmse_scores.std(), n_decimals)}") # average root mean square error score
-    return mse_scores
+    print(f"Average R² score: {np.round(r2_scores.mean(), n_decimals)}, standard deviation: {np.round(r2_scores.std(), n_decimals)}") # average root mean square error score
 
-def plot_ridge_alpha_mse(ridge_results):
+    return mse_scores, r2_scores
+
+def plot_ridge_alpha_cv(ridge_results):
     """
     Plot Ridge alpha vs CV MSE and Test MSE.
 
     ridge_results: list of tuples
         Each tuple: (alpha, CV_MSE, Test_MSE, R2)
     """
-    ridge_df = pd.DataFrame(ridge_results, columns=["Alpha", "CV_MSE", "Test_MSE", "R2_Test"])
+    ridge_df = pd.DataFrame(ridge_results, columns=["Alpha", "MSE_CV", "R2_CV"])
+
+    fig, axes = plt.subplots(1, 2, figsize=(10,6))
+    
     # Plot Ridge alpha vs MSE.
-    plt.figure(figsize=(10,6))
-    plt.plot(ridge_df["Alpha"], ridge_df["CV_MSE"], marker='o', markersize=8, label="CV MSE")
-    plt.plot(ridge_df["Alpha"], ridge_df["Test_MSE"], marker='s', markersize=8, label="Test MSE")
-    plt.xscale("log")
-    plt.xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
-    plt.xlabel("Alpha")
-    plt.ylabel("MSE")
-    plt.title("Ridge Regression: Alpha vs MSE")
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.show()
-
-def plot_ridge_alpha_r2(ridge_results):
+    ax = axes[0]
+    ax.plot(ridge_df["Alpha"], ridge_df["MSE_CV"], marker='o', markersize=8, label="CV MSE")
+    ax.set_xscale("log")
+    ax.set_xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
+    ax.set_xlabel("Alpha")
+    ax.set_ylabel("MSE")
+    ax.set_title("Ridge Regression: Alpha vs CV MSE")
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
+    
     # Plot Ridge alpha vs Test R².
-    ridge_df = pd.DataFrame(ridge_results, columns=["Alpha", "CV_MSE", "Test_MSE", "R2_Test"])
-    plt.figure(figsize=(10,6))
-    plt.plot(ridge_df["Alpha"], ridge_df["R2_Test"], marker='o', markersize=8, label="Test R²", color='green')
-    plt.xscale("log")
-    plt.xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
-    plt.xlabel("Alpha")
-    plt.ylabel("Test R²")
-    plt.title("Ridge Regression: Alpha vs Test R²")
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.show()
+    ax = axes[1]
+    ax.plot(ridge_df["Alpha"], ridge_df["R2_CV"], marker='o', markersize=8, label="Test R²", color='green')
+    ax.set_xscale("log")
+    ax.set_xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
+    ax.set_xlabel("Alpha")
+    ax.set_ylabel("Test R²")
+    ax.set_title("Ridge Regression: Alpha vs CV R²")
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
 
+    plt.suptitle('Cross Validation Scores for Ridge Alpha')
+    plt.tight_layout()
+    plt.show()
+        
 if __name__ == "__main__":
     X_train, X_test, y_train, y_test = preprocess_data("insurance.csv")
     kf = KFold(K, shuffle=True, random_state=RANDOM_STATE) # generate folds
 
     # Linear Regression
-    print("\n--- Linear Regression ---")
     lin_reg = LinearRegression() # initialise linear regression model object
     lin_reg.fit(X_train, y_train) # train the linear regression using train data
-    cv_scores_lr = cross_validate(lin_reg, X_train, y_train, kf)
-    print_metrics(lin_reg, X_test, y_test)
 
     # Ridge Regression
-    print("\n--- Grid search for ridge regression alpha value ---")
+    print("\n# Grid search for ridge regression alpha value")
     alphas = [0.01, 0.1, 1.0, 10.0, 100.0] # different alpha values are cross validated through iteration, logarithmic scale is adopted to match any scale of data
     best_alpha = 0
     best_scores_ridge = None
@@ -134,32 +137,35 @@ if __name__ == "__main__":
         rlr = Ridge(alpha=alpha) # initialise ridge regression model object with the specified alpha value
         rlr.fit(X_train, y_train) # train the ridge regression using train data
         rlr_dict[alpha] = rlr
-        print(f"\n--- Ridge regression with alpha {alpha} ---")
+        print(f"\n## Ridge regression with alpha {alpha}")
         
         # Cross-validation MSE
-        mse_scores = cross_validate(rlr, X_train, y_train, kf)
+        mse_scores, r2_scores = cross_validate(rlr, X_train, y_train, kf)
         
         # Collect results for plotting
-        mse_cv = float(mse_scores.mean())
-        mse_test = float(mean_squared_error(y_test, rlr.predict(X_test)))
-        r2_test = float(r2_score(y_test, rlr.predict(X_test)))
-        ridge_results.append((float(alpha), mse_cv, mse_test, r2_test))
-        
-        print(f"Test MSE: {mse_test:.2f}, Test R²: {r2_test:.4f}")
+        ridge_results.append([alpha, mse_scores.mean(), r2_scores.mean()])
 
         if best_scores_ridge is None or best_scores_ridge.mean() > mse_scores.mean(): # try to get best alpha for ridge
             best_scores_ridge = mse_scores
             best_alpha = alpha
+            
+    print(f"\nBest Ridge alpha = {best_alpha}")
 
-    plot_ridge_alpha_mse(ridge_results) # Visualize Ridge alpha vs MSE
-    plot_ridge_alpha_r2(ridge_results) # Visualize Ridge alpha vs R²
+    plot_ridge_alpha_cv(ridge_results) # Visualize Ridge alpha vs MSE, Ridge alpha vs R²
     # Observations: When the alpha value increases, the MSE value tends to increase, while the R² value tends to decrease, which is commonly seen in Ridge regression when the model is overfitting.
     # However in our dataset, the Linear Regression model (α≈0) already fits well, so Ridge regression model mainly demonstrates its potential to prevent overfitting if the dataset were noisier or had more features.
     
-    rlr_best = rlr_dict[best_alpha] # take the ridge regression with the best estimated alpha value
-    print(f"\nBest Ridge alpha = {best_alpha}")
-    y_test_pred_rlr = rlr_best.predict(X_test) # Predicts with the charges using the test data and trained model
-    print_metrics(rlr_best, X_test, y_test)
+    rlr = rlr_dict[best_alpha] # take the ridge regression with the best estimated alpha value
+    y_test_pred_rlr = rlr.predict(X_test) # Predicts with the charges using the test data and trained model
+    
+    print("\n# Trained model results")
+    print("\n## Linear regression")
+    cv_scores_lr = cross_validate(lin_reg, X_train, y_train, kf)
+    print_metrics(lin_reg, X_test, y_test)
+
+    print(f"\n## Ridge regression with best estimated alpha value {best_alpha}")
+    cv_scores_rlr = cross_validate(rlr, X_train, y_train, kf)
+    print_metrics(rlr, X_test, y_test)
 
 '''
 # This is to visualise the error, but i dont see the big difference even if i do so, so i just left it here for future usage or smth
