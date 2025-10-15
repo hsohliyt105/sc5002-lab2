@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split, KFold, cross_val_score
@@ -15,41 +16,6 @@ test_size = 0.2 # train : test = 0.8 : 0.2
 #Data loading and preprocessing
 n_decimals = 4
 np.set_printoptions(suppress=True, precision=n_decimals) # adjust formatting for printing numpy array 
-
-def preprocess_data(csv_path):
-    df = pd.read_csv(csv_path) # loads csv into raw list data
-
-    # converts raw data into usable data for training. sex and region are labelled by string, so are transformed to booleans using one-hot encoding
-    df['is_male'] = (df['sex'] == 'male').astype(bool)
-    df['is_female'] = (df['sex'] == 'female').astype(bool)
-    df['is_smoker'] = (df['smoker'] == 'yes').astype(bool)
-    region_dummies = pd.get_dummies(df['region'], prefix='region')
-    df = pd.concat([df, region_dummies], axis=1)
-
-    # Features and target
-    features = [
-        'age', 
-        'is_male', 
-        'is_female', 
-        'bmi', 
-        'children',
-        'is_smoker', 
-        'region_northeast', 
-        'region_northwest',
-        'region_southeast', 
-        'region_southwest'
-    ]
-    
-    X = df[features] # features are selected from the dataframe
-    y = df['charges']
-
-    # data are scaled (preprocessing) because each features have different ranges of values, so no single feature dominates the result
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X,y)
-
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=test_size, random_state=RANDOM_STATE)
-    return X_train, X_test, y_train, y_test
 
 def print_metrics(model, X, y):
     print("\n### Overall performance on test set")
@@ -118,7 +84,45 @@ def plot_ridge_alpha_cv(ridge_results):
     plt.show()
         
 if __name__ == "__main__":
-    X_train, X_test, y_train, y_test = preprocess_data("insurance.csv")
+    df = pd.read_csv("insurance.csv") # loads csv into raw list data
+
+    # converts raw data into usable data for training. sex and region are labelled by string, so are transformed to booleans using one-hot encoding
+    df['is_male'] = (df['sex'] == 'male').astype(bool)
+    df['is_female'] = (df['sex'] == 'female').astype(bool)
+    df['is_smoker'] = (df['smoker'] == 'yes').astype(bool)
+    region_dummies = pd.get_dummies(df['region'], prefix='region')
+    df = pd.concat([df, region_dummies], axis=1)
+
+    # Features and target
+    features = [
+        'age', 
+        'is_male', 
+        'is_female', 
+        'bmi', 
+        'children',
+        'is_smoker', 
+        'region_northeast', 
+        'region_northwest',
+        'region_southeast', 
+        'region_southwest'
+    ]
+    
+    X = df[features] # features are selected from the dataframe
+    y = df['charges']
+    
+    # check colinearity
+    corr = X.corr()
+    fig = plt.figure(figsize=(20,10))
+    ax = sns.heatmap(corr, annot=True, cmap="YlGnBu")
+    ax.set_title("Insurance features correlation")
+    plt.show()
+
+    # data are scaled (preprocessing) because each features have different ranges of values, so no single feature dominates the result
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X,y)
+
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=test_size, random_state=RANDOM_STATE)
     kf = KFold(K, shuffle=True, random_state=RANDOM_STATE) # generate folds
 
     # Linear Regression
