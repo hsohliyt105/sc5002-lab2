@@ -68,7 +68,9 @@ Comparing the test metrics for each models, we can conclude that the linear regr
 
 Testing the model on the test set, the metrics are as follows: `MSE: 33596915.8514, RMSE: 5796.2847, R²: 0.7836, Max Error: 22850.1365`
 
-The target data (insurance charge) shows 
+The target data (insurance charge) shows average value of $13270.42 with standard deviation of $12110.01. If we match the RMSE value with the actual target data, 13270.42 +- 5796.28 is a huge error, and we cannot say the model is performing very well. However, still, with R² value of 0.7836 says it at least can work as a general predictor for a cost. 
+
+For an alternative model that can be used for the prediction, XGBoost can be used to predict the charges because it can avoid both overfitting and underfitting, while accurately predicting the test data. 
 
 Although the ordinary linear regression performed better in this dataset, in reality, we believe that dataset will not be as clean as what we done for this project. We may have more variables that are correlated to each others, more outliers which can affect the accuracy of our model, and more null data in data set; we believe in such situations, the ridge regression will take more advantages than linear regression to make a better fit prediction.
 
