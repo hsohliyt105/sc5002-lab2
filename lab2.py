@@ -74,7 +74,7 @@ def plot_ridge_alpha_cv(ridge_results):
     ax.set_xscale("log")
     ax.set_xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
     ax.set_xlabel("Alpha")
-    ax.set_ylabel("Test R²")
+    ax.set_ylabel("R²")
     ax.set_title("Ridge Regression: Alpha vs CV R²")
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
