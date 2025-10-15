@@ -1,17 +1,27 @@
 # sc5002-lab2
 Group 8
 
+Please use the following codes to prepare the environment:
+
+'pip3 install numpy pandas matplotlib scikit-learn seaborn'
+
 Our dataset is chosen from kaggle and here is the link: https://www.kaggle.com/datasets/mosapabdelghany/medical-insurance-cost-dataset
 
 The dataset include 7 parameters in total, which are age,bmi,sex,children,smoker,region, and we use these exactly these 7 parameters for our regression model to predict the insurance charges. Fortunately, our dataset is very clean. We did not encounter any 0s or nil in columns, which makes us easier to do the data preprocessing.
 
-For the preprocessing we encode categorical variables:
+To make our results replicable, we choose 42 as the fixed random state seed.
+
+For the preprocessing, we encoded categorical variables:
 
 sex → is_male, is_female
 
 smoker → is_smoker
 
 region → one-hot encoding
+
+The followings are our output for this dataset. In terms of the ridge regression, we tried 5 alpha values which are 0.01,0.1,1.0,10,100, and we found that when alpha equals to 1 we get the optimal mse and r^2 value. The r^2 value for the optimal alpha is 0.7835 which means it can exlpan 78.35% of the data, which shows our model is considered good fit to the dataset.
+
+After we compare the output from linear regression model to the ridge regression, we found that there is almost no different between them, which shows that our dataset do not have much correlated variables or in other words outliers, and that also proves that our dataset is clean. However, when we compare how different alpha will contribute to mse and r^2 values, we found that when alpha value equals to 100, the r^2 value shows a rapid decline and the mse value tends to have an obvious increase. These changes show the potential ability that ridge regression can do to help prevent the overfitting of the model, which is the most different part we found in our project compared to the linear regression. In reality, we believe that the dataset will not be as clean as what we done for this project, we may have more variables that are correlated to each others, we may have more outliers which can affect the accuracy of our model, and we believe in such situations, the ridge regression will take more advantages than linear regression to make a better fit prediction.
 
 # Grid search for ridge regression alpha value
 
