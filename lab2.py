@@ -70,7 +70,7 @@ def plot_ridge_alpha_cv(ridge_results):
     
     # Plot Ridge alpha vs Test R².
     ax = axes[1]
-    ax.plot(ridge_df["Alpha"], ridge_df["R2_CV"], marker='o', markersize=8, label="Test R²", color='green')
+    ax.plot(ridge_df["Alpha"], ridge_df["R2_CV"], marker='o', markersize=8, label="R²", color='green')
     ax.set_xscale("log")
     ax.set_xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
     ax.set_xlabel("Alpha")
