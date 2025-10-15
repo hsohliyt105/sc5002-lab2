@@ -30,11 +30,19 @@ Since the features have different range of values, the feature data had to be sc
 
 ## Cross validation and hyperparameter (alpha)
 
+<img width="1000" height="600" alt="Figure_1" src="https://github.com/user-attachments/assets/2ad9fcd3-d134-49d8-800f-87c9254e92be" />
+
 In terms of the ridge regression, we adopted grid search method and k-fold for cross validation, to search the optimal ridge alpha value among tested values which are `0.01`, `0.1`, `1.0`, `10.0`, `100.0`, and we found that when alpha equals to 1 we get the optimal mse and r^2 value. The r^2 value for the optimal alpha is 0.7835 which means it can exlpan 78.35% of the train data in cross validation, which shows our model is considered good fit to the dataset. When we compare how different alpha will contribute to mse and r^2 values, we found that when alpha value equals to 100, the r^2 value shows a rapid decline and the mse value tends to have an obvious increase. This can be explained by the underfitting of the ridge regression model when the penalty value is too high. Though, these changes show the potential ability that ridge regression can do to help prevent the overfitting of the model, which is the most different part we found in our project compared to the linear regression.
 
 ## Trained model result
 
-After we compare the output from linear regression model to the ridge regression, we found that there is almost no different between them, which shows that our dataset do not have highly correlated variables or in other words outliers, and that also proves that our dataset is clean. In reality, we believe that the dataset will not be as clean as what we done for this project, we may have more variables that are correlated to each others, we may have more outliers which can affect the accuracy of our model, and we believe in such situations, the ridge regression will take more advantages than linear regression to make a better fit prediction.
+To compare the linear and ridge models, the trained linear regression performed slightly better than the trained ridge regression model, with MSE and R² values on test set of 33596915.8514, 0.7836, and 33604538.0379, 0.7835 for each. This means the linear model was not overfitting the train data, and use of penalty in ridge model made the prediction worse. 
+
+This shows that our dataset do not have highly correlated variables or in other words outliers, and that also proves that our dataset is clean. 
+
+## Conclusion
+
+Although the ordinary linear regression performed better in this dataset, in reality, we believe that dataset will not be as clean as what we done for this project. We may have more variables that are correlated to each others, more outliers which can affect the accuracy of our model, and more null data in data set; we believe in such situations, the ridge regression will take more advantages than linear regression to make a better fit prediction.
 
 The below is our printed console lines in runtime.
 
