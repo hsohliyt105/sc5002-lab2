@@ -1,12 +1,10 @@
-import csv
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split, KFold, cross_val_score
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error, explained_variance_score, max_error, median_absolute_error
+from sklearn.metrics import mean_squared_error, r2_score, max_error
 
 RANDOM_STATE = 42 # creates reproducible result by fixing the random seed which makes it possible to compare and make the model better
 
@@ -14,38 +12,44 @@ RANDOM_STATE = 42 # creates reproducible result by fixing the random seed which 
 K = 5 # K-fold size. The train data is divided into K folds.
 test_size = 0.2 # train : test = 0.8 : 0.2
 
+#Data loading and preprocessing
 n_decimals = 4
 np.set_printoptions(suppress=True, precision=n_decimals) # adjust formatting for printing numpy array 
 
-df = pd.read_csv('insurance.csv') # loads csv into raw list data
-# converts raw data into usable data for training. sex and region are labelled by string, so are transformed to booleans using one-hot encoding
-df['is_male'] = (df['sex'] == 'male').astype(bool)
-df['is_female'] = (df['sex'] == 'female').astype(bool)
-df['is_smoker'] = (df['smoker'] == 'yes').astype(bool)
-region_dummies = pd.get_dummies(df['region'], prefix='region')
-df = pd.concat([df, region_dummies], axis=1)
+def preprocess_data(csv_path):
+    df = pd.read_csv(csv_path) # loads csv into raw list data
 
-features = ['age', 
-            'is_male', 
-            'is_female', 
-            'bmi', 
-            'children', 
-            'is_smoker', 
-            'region_northeast', 
-            'region_northwest', 
-            'region_southeast', 
-            'region_southwest']
+    # converts raw data into usable data for training. sex and region are labelled by string, so are transformed to booleans using one-hot encoding
+    df['is_male'] = (df['sex'] == 'male').astype(bool)
+    df['is_female'] = (df['sex'] == 'female').astype(bool)
+    df['is_smoker'] = (df['smoker'] == 'yes').astype(bool)
+    region_dummies = pd.get_dummies(df['region'], prefix='region')
+    df = pd.concat([df, region_dummies], axis=1)
 
-X = df[features] # features are selected from the dataframe
-y = df['charges']
+    # Features and target
+    features = [
+        'age', 
+        'is_male', 
+        'is_female', 
+        'bmi', 
+        'children',
+        'is_smoker', 
+        'region_northeast', 
+        'region_northwest',
+        'region_southeast', 
+        'region_southwest'
+    ]
+    
+    X = df[features] # features are selected from the dataframe
+    y = df['charges']
 
-# data are scaled (preprocessing) because each features have different ranges of values, so no single feature dominates the result
-scaler = StandardScaler() 
-X_scaled = scaler.fit_transform(X, y) 
+    # data are scaled (preprocessing) because each features have different ranges of values, so no single feature dominates the result
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X,y)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=RANDOM_STATE)
-
-kf = KFold(K, shuffle=True, random_state=RANDOM_STATE) # generate folds
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=test_size, random_state=RANDOM_STATE)
+    return X_train, X_test, y_train, y_test
 
 def print_metrics(model, X, y):
     print("--- Overall performance on test set ---")
@@ -72,37 +76,90 @@ def cross_validate(model, X, y, cv):
     print(f"Average RMSE score: {np.round(rmse_scores.mean(), n_decimals)}, standard deviation: {np.round(rmse_scores.std(), n_decimals)}") # average root mean square error score
     return mse_scores
 
-lin_reg = LinearRegression() # initialise linear regression model object
-lin_reg.fit(X_train, y_train) # train the linear regression using train data
-y_test_pred_lr = lin_reg.predict(X_test) # Predicts with the charges using the test data and trained model
+def plot_ridge_alpha_mse(ridge_results):
+    """
+    Plot Ridge alpha vs CV MSE and Test MSE.
 
-rlr_dict = dict()
-best_alpha = 0
-best_scores_ridge = None
-print("- Grid search for ridge regression alpha value -")
-for alpha in [0.01, 0.1, 1.0, 10.0, 100.0]: # different alpha values are cross validated through iteration, logarithmic scale is adopted to match any scale of data
-    rlr = Ridge(alpha=alpha) # initialise ridge regression model object with the specified alpha value
-    rlr.fit(X_train, y_train) # train the ridge regression using train data
-    rlr_dict[alpha] = rlr
-    print(f"\n-- Ridge regression with alpha {alpha} --")
-    mse_scores = cross_validate(rlr, X_train, y_train, kf)
+    ridge_results: list of tuples
+        Each tuple: (alpha, CV_MSE, Test_MSE, R2)
+    """
+    ridge_df = pd.DataFrame(ridge_results, columns=["Alpha", "CV_MSE", "Test_MSE", "R2_Test"])
+    # Plot Ridge alpha vs MSE.
+    plt.figure(figsize=(10,6))
+    plt.plot(ridge_df["Alpha"], ridge_df["CV_MSE"], marker='o', markersize=8, label="CV MSE")
+    plt.plot(ridge_df["Alpha"], ridge_df["Test_MSE"], marker='s', markersize=8, label="Test MSE")
+    plt.xscale("log")
+    plt.xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
+    plt.xlabel("Alpha")
+    plt.ylabel("MSE")
+    plt.title("Ridge Regression: Alpha vs MSE")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.show()
 
-    if best_scores_ridge is None or best_scores_ridge.mean() > mse_scores.mean(): # try to get best alpha for ridge
-        best_scores_ridge = mse_scores
-        best_alpha = alpha
+def plot_ridge_alpha_r2(ridge_results):
+    # Plot Ridge alpha vs Test R².
+    ridge_df = pd.DataFrame(ridge_results, columns=["Alpha", "CV_MSE", "Test_MSE", "R2_Test"])
+    plt.figure(figsize=(10,6))
+    plt.plot(ridge_df["Alpha"], ridge_df["R2_Test"], marker='o', markersize=8, label="Test R²", color='green')
+    plt.xscale("log")
+    plt.xticks(ridge_df["Alpha"], [str(a) for a in ridge_df["Alpha"]])
+    plt.xlabel("Alpha")
+    plt.ylabel("Test R²")
+    plt.title("Ridge Regression: Alpha vs Test R²")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.show()
 
-rlr = rlr_dict[best_alpha] # take the ridge regression with the best estimated alpha value
-y_test_pred_rlr = rlr.predict(X_test) # Predicts with the charges using the test data and trained model
+if __name__ == "__main__":
+    X_train, X_test, y_train, y_test = preprocess_data("insurance.csv")
+    kf = KFold(K, shuffle=True, random_state=RANDOM_STATE) # generate folds
 
-# prints metrics for each trained models
-print("\n- Trained model results -")
-print("\n-- Linear regression --")
-cv_scores_lr = cross_validate(lin_reg, X_train, y_train, kf)
-print_metrics(lin_reg, X_test, y_test)
+    # Linear Regression
+    print("\n--- Linear Regression ---")
+    lin_reg = LinearRegression() # initialise linear regression model object
+    lin_reg.fit(X_train, y_train) # train the linear regression using train data
+    cv_scores_lr = cross_validate(lin_reg, X_train, y_train, kf)
+    print_metrics(lin_reg, X_test, y_test)
 
-print(f"\n-- Ridge regression with best estimated alpha value {best_alpha}--")
-cv_scores_rlr = cross_validate(rlr, X_train, y_train, kf)
-print_metrics(rlr, X_test, y_test)
+    # Ridge Regression
+    print("\n--- Grid search for ridge regression alpha value ---")
+    alphas = [0.01, 0.1, 1.0, 10.0, 100.0] # different alpha values are cross validated through iteration, logarithmic scale is adopted to match any scale of data
+    best_alpha = 0
+    best_scores_ridge = None
+    rlr_dict = {}
+    ridge_results = []
+    
+    for alpha in alphas:
+        rlr = Ridge(alpha=alpha) # initialise ridge regression model object with the specified alpha value
+        rlr.fit(X_train, y_train) # train the ridge regression using train data
+        rlr_dict[alpha] = rlr
+        print(f"\n--- Ridge regression with alpha {alpha} ---")
+        
+        # Cross-validation MSE
+        mse_scores = cross_validate(rlr, X_train, y_train, kf)
+        
+        # Collect results for plotting
+        mse_cv = float(mse_scores.mean())
+        mse_test = float(mean_squared_error(y_test, rlr.predict(X_test)))
+        r2_test = float(r2_score(y_test, rlr.predict(X_test)))
+        ridge_results.append((float(alpha), mse_cv, mse_test, r2_test))
+        
+        print(f"Test MSE: {mse_test:.2f}, Test R²: {r2_test:.4f}")
+
+        if best_scores_ridge is None or best_scores_ridge.mean() > mse_scores.mean(): # try to get best alpha for ridge
+            best_scores_ridge = mse_scores
+            best_alpha = alpha
+
+    plot_ridge_alpha_mse(ridge_results) # Visualize Ridge alpha vs MSE
+    plot_ridge_alpha_r2(ridge_results) # Visualize Ridge alpha vs R²
+    # Observations: When the alpha value increases, the MSE value tends to increase, while the R² value tends to decrease, which is commonly seen in Ridge regression when the model is overfitting.
+    # However in our dataset, the Linear Regression model (α≈0) already fits well, so Ridge regression model mainly demonstrates its potential to prevent overfitting if the dataset were noisier or had more features.
+    
+    rlr_best = rlr_dict[best_alpha] # take the ridge regression with the best estimated alpha value
+    print(f"\nBest Ridge alpha = {best_alpha}")
+    y_test_pred_rlr = rlr_best.predict(X_test) # Predicts with the charges using the test data and trained model
+    print_metrics(rlr_best, X_test, y_test)
 
 '''
 # This is to visualise the error, but i dont see the big difference even if i do so, so i just left it here for future usage or smth
@@ -130,3 +187,7 @@ plt.suptitle('Test Set Evaluation: Linear vs Ridge Regression')
 plt.tight_layout()
 plt.show()
 '''
+
+# Conclusions: In this insurance dataset, Linear regression is sufficient because the total number of features is not that big, and the dataset is relatively clean.
+# Ridge regression is more useful when the dataset is noisy or has more features including correlated ones.
+# For example, if the dataset had addtional features like 'weight', 'height', 'exercise_frequency', etc., which could be correlated with 'bmi' or 'age', Ridge regression would denfinely be helpful to regularize the coefficients and prevent overfitting.
