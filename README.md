@@ -19,6 +19,18 @@ smoker → is_smoker
 
 region → one-hot encoding
 
+As a result, we have features as follows:
+x0: age
+x1: is_male
+x2: is_female
+x3: bmi
+x4: children
+x5: is_smoker
+x6: region_northeast
+x7: region_northwest
+x8: region_southeast
+x9: region_southwest
+
 <img width="1193" height="649" alt="Screenshot 2025-10-15 at 3 32 26 PM" src="https://github.com/user-attachments/assets/2fe1f8f0-9bde-47f8-a5ae-f09f815fc846" />
 The data heatmap describes the colinearity of each features. The features `bmi` and `region_southeast` shows mildly conlinear, where ridge model can outperform linear regression model to avoid overfitting from colinearity.
 
@@ -36,13 +48,31 @@ In terms of the ridge regression, we adopted grid search method and k-fold for c
 
 ## Trained model result
 
-To compare the linear and ridge models, the trained linear regression performed slightly better than the trained ridge regression model, with MSE and R² values on test set of 33596915.8514, 0.7836, and 33604538.0379, 0.7835 for each. This means the linear model was not overfitting the train data, and use of penalty in ridge model made the prediction worse. 
+### Linear regression
 
-This shows that our dataset do not have highly correlated variables or in other words outliers, and that also proves that our dataset is clean. 
+`ŷ = 3609.149x0 + -4.6477x1 + 4.6477x2 + 2054.8851x3 + 512.4789x4 + 9544.2511x5 + 198.5836x6 + 39.8323x7 + -86.4672x8 + -148.4786x9`
+
+`MSE: 33596915.8514, RMSE: 5796.2847, R²: 0.7836, Max Error: 22850.1365`
+
+### Ridge regression
+
+`ŷ = 3609.149x0 + -4.6477x1 + 4.6477x2 + 2054.8851x3 + 512.4789x4 + 9544.2511x5 + 198.5836x6 + 39.8323x7 + -86.4672x8 + -148.4786x9`
+
+`MSE: 33604538.0379, RMSE: 5796.9421, R²: 0.7835, Max Error: 22875.9918`
 
 ## Conclusion
 
+To compare the linear and ridge models, the trained linear regression performed slightly better than the trained ridge regression model, with MSE and R² values on test set of 33596915.8514, 0.7836, and 33604538.0379, 0.7835 for each. This means the linear model was not overfitting the train data, and use of penalty in ridge model made the prediction worse. This shows that our dataset do not have highly correlated variables or in other words outliers, and that also proves that our dataset is clean. 
+
+Comparing the test metrics for each models, we can conclude that the linear regression can be used as the final model for the insurance charge prediction: `ŷ = 3609.149x0 + -4.6477x1 + 4.6477x2 + 2054.8851x3 + 512.4789x4 + 9544.2511x5 + 198.5836x6 + 39.8323x7 + -86.4672x8 + -148.4786x9`
+
+Testing the model on the test set, the metrics are as follows: `MSE: 33596915.8514, RMSE: 5796.2847, R²: 0.7836, Max Error: 22850.1365`
+
+The target data (insurance charge) shows 
+
 Although the ordinary linear regression performed better in this dataset, in reality, we believe that dataset will not be as clean as what we done for this project. We may have more variables that are correlated to each others, more outliers which can affect the accuracy of our model, and more null data in data set; we believe in such situations, the ridge regression will take more advantages than linear regression to make a better fit prediction.
+
+For linear regression model, data with simpler and non-colinear features could perform better over ridge model, because taking penalty term could cause underfitting, increasing the bias. For ridge regression model, data with complex, colinear feature could perform better vice versa.
 
 The below is our printed console lines in runtime.
 
