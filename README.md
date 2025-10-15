@@ -28,8 +28,7 @@ Average R² score: 0.7389, standard deviation: 0.0311
 ##Ridge regression with alpha 0.1
 
 
-###Cross validation with 5 folds
-
+### Cross validation with 5 folds
 Average MSE score: 37737150.0578, standard deviation: 5921938.6763
 Average RMSE score: 6123.3507, standard deviation: 491.6572
 Average R² score: 0.7389, standard deviation: 0.0311
