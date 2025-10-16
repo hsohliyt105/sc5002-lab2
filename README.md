@@ -32,7 +32,7 @@ x8: region_southeast
 x9: region_southwest
 
 <img width="1193" height="649" alt="Screenshot 2025-10-15 at 3 32 26 PM" src="https://github.com/user-attachments/assets/2fe1f8f0-9bde-47f8-a5ae-f09f815fc846" />
-The data heatmap describes the colinearity of each features. The features `bmi` and `region_southeast` shows mildly conlinear, where ridge model can outperform linear regression model to avoid overfitting from colinearity.
+The data heatmap describes the colinearity of each features. The features `bmi` and `region_southeast` shows mildly conlinear, where ridge model can outperform linear regression model to avoid overfitting from colinearity. However, the overall data heatmap indicates low multicollinearity among our features, meaning the original features don't have strong interdependencies that would benefit from Ridge regularization.
 
 ## Preprocessing
 
