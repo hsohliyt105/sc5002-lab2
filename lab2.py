@@ -136,7 +136,8 @@ if __name__ == "__main__":
     best_scores_ridge = None
     rlr_dict = {}
     ridge_results = []
-    
+
+    # this is basically grid search method, but instead of using sklearn built-in functions we came up wiht our own code to show how alpha and expected performance relates.
     for alpha in alphas:
         rlr = Ridge(alpha=alpha) # initialise ridge regression model object with the specified alpha value
         rlr.fit(X_train, y_train) # train the ridge regression using train data
